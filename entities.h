@@ -2,13 +2,13 @@
 #define ENTITIES_H
 
 class Entities {
-protected:
+public:
     int x, y;
     char symbol;
     int direction; // 1 - вправо, -1 - влево
     int speed;
 
-public:
+
     Entities(int x, int y, char symbol, int speed);
     virtual void update() = 0;
     int getX() const;
@@ -17,3 +17,4 @@ public:
 };
 
 #endif // ENTITIES_H
+

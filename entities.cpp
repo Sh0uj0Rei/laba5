@@ -6,3 +6,4 @@ Entities::Entities(int x, int y, char symbol, int speed)
 int Entities::getX() const { return x; }
 int Entities::getY() const { return y; }
 char Entities::getSymbol() const { return symbol; }
+

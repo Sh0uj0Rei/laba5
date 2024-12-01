@@ -1,6 +1,6 @@
 #include "bullet.h"
 
-Bullet::Bullet(int x, int y) : Entities(x, y, '|', 2) {}
+Bullet::Bullet(int x, int y) : Entities(x, y, '|', 1) {}
 
 void Bullet::update() {
     y--; // Двигаемся вверх
