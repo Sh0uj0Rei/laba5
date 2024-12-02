@@ -2,10 +2,10 @@
 #define GAME_H
 
 #include <vector>
+#include "entities.h"
 
-// Предварительное объявление класса Player
 class Player;
-class Entities; // Если у вас есть указатели на Entities
+class Alien;
 
 class Game {
 private:
@@ -15,14 +15,11 @@ private:
 
 public:
     Game();
-    void initializeAliens();
+    void addEntity(Entities* entity);
     void input();
     void draw();
     void update();
-    void removeInactiveEntities();
-    void checkCollisions();
     bool isGameOver() const;
-    void addEntity(Entities* entity);
 };
 
 #endif // GAME_H

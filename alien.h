@@ -5,7 +5,7 @@
 
 class Alien : public Entities {
 public:
-    Alien(int x, int y, char type);
+    Alien(int x, int y);
     void update() override;
 };
 

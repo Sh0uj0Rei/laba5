@@ -1,109 +1,81 @@
 #include "game.h"
-#include "player.h"  // Включаем Player
+#include "player.h"
 #include "alien.h"
+#include "bullet.h"
 #include <iostream>
-#include <vector>
-#include <algorithm> // Для std::remove
+#include <ncurses.h>
+#include <algorithm>
 
 Game::Game() {
-    player = new Player(40, 18, this);  // Передаем текущий объект игры (this) в Player
-    initializeAliens(); 
-}
+    player = new Player(40, 18, this); // Начальная позиция игрока
+    addEntity(player); // Добавляем игрока в сущности игры
 
-void Game::initializeAliens() {
-    // Пример добавления пришельцев
+    // Добавление пришельцев
     for (int i = 0; i < 5; ++i) {
         for (int j = 0; j < 10; ++j) {
-            entities.push_back(new Alien(10 + j * 5, 2 + i, 'V'));  // Размещение пришельцев
+            addEntity(new Alien(10 + j * 5, 2 + i)); // Размещение пришельцев
         }
     }
+
+    gameOn = true;
+}
+
+void Game::addEntity(Entities* entity) {
+    entities.push_back(entity);
 }
 
 void Game::input() {
-    // Ввод уже обрабатывается в Player
+    player->update();  // Обрабатываем действия игрока (движение и стрельба)
 }
 
 void Game::draw() {
-    system("clear"); // Очистка экрана (Linux)
-
-    // Отрисовка игрового поля
-    for (int y = 0; y < 20; ++y) {  // Пример для поля 20x80
-        for (int x = 0; x < 80; ++x) {
-            bool printed = false;
-
-            // Отрисовываем все сущности
-            for (auto entity : entities) {
-                if (entity->getX() == x && entity->getY() == y) {
-                    std::cout << entity->getSymbol();  // Отрисовка символа сущности
-                    printed = true;
-                    break;
-                }
-            }
-
-            // Если сущности нет, рисуем игрока
-            if (!printed && player->getX() == x && player->getY() == y) {
-                std::cout << player->getSymbol(); // Отрисовка игрока
-                printed = true;
-            }
-
-            // Отрисовываем пули
-            if (!printed) {
-                for (auto bullet : entities) {
-                    if (bullet->getX() == x && bullet->getY() == y) {
-                        std::cout << bullet->getSymbol(); // Отрисовка пули
-                        printed = true;
-                        break;
-                    }
-                }
-            }
-        }
-        std::cout << std::endl;
+    clear();  // Очистка экрана с использованием ncurses
+    for (auto entity : entities) {
+        mvaddch(entity->getY(), entity->getX(), entity->getSymbol()); // Отображаем каждую сущность
     }
 
-    std::cout << "Lives: " << player->getLives() << std::endl;
+    refresh(); // Обновляем экран
 }
 
 void Game::update() {
-    player->update();  // Обновляем игрока
     for (auto entity : entities) {
-        entity->update();  // Обновляем все сущности (включая пули и пришельцев)
+        entity->update();  // Обновляем состояние всех сущностей
     }
-    removeInactiveEntities();  // Удаляем неактивные сущности (например, пули, вышедшие за экран)
-    checkCollisions();         // Проверка на столкновения
-    if (player->getLives() <= 0) {
-        gameOn = false;  // Завершаем игру, если жизни закончились
-    }
-}
 
-void Game::removeInactiveEntities() {
     // Удаление пуль, которые вышли за экран
-    for (auto it = entities.begin(); it != entities.end();) {
-        if ((*it)->getY() < 0) {
-            it = entities.erase(it);  // Удаление пули
-        } else {
-            ++it;
-        }
-    }
-}
+    entities.erase(std::remove_if(entities.begin(), entities.end(), [](Entities* entity) {
+        return entity->getY() < 0;
+    }), entities.end());
 
-void Game::checkCollisions() {
-    // Пример обработки коллизий (пуль с пришельцами)
-    for (auto bullet : entities) {
-        for (auto alien : entities) {
-            if (bullet->getX() == alien->getX() && bullet->getY() == alien->getY()) {
-                // Удаление пули и пришельца
-                entities.erase(std::remove(entities.begin(), entities.end(), bullet), entities.end());
-                entities.erase(std::remove(entities.begin(), entities.end(), alien), entities.end());
-                break;
+    // Удаляем пули, которые столкнулись с пришельцами
+    for (auto it = entities.begin(); it != entities.end(); ++it) {
+        Bullet* bullet = dynamic_cast<Bullet*>(*it);
+        if (bullet) {
+            for (auto enemyIt = entities.begin(); enemyIt != entities.end(); ++enemyIt) {
+                Alien* alien = dynamic_cast<Alien*>(*enemyIt);
+                if (alien && alien->getX() == bullet->getX() && alien->getY() == bullet->getY()) {
+                    // Удаляем пулю и пришельца
+                    delete bullet;
+                    delete alien;
+                    it = entities.erase(it); // Удаляем пулю из списка
+                    enemyIt = entities.erase(enemyIt); // Удаляем пришельца из списка
+                    break;
+                }
             }
         }
     }
 }
 
 bool Game::isGameOver() const {
-    return player->getLives() <= 0; // Игра завершена, если у игрока нет жизней
-}
-
-void Game::addEntity(Entities* entity) {
-    entities.push_back(entity); // Функция для добавления сущности в список
+    // Проверка на конец игры: если нет пришельцев, игра закончена
+    for (auto entity : entities) {
+        if (dynamic_cast<Alien*>(entity)) {
+            // Проверяем, достиг ли пришелец нижней границы экрана
+            if (entity->getY() >= 18) {
+                return true; // Игра окончена, пришелец дошел до игрока
+            }
+            return false; // Есть хотя бы один живой пришелец
+        }
+    }
+    return true; // Все пришельцы уничтожены
 }
