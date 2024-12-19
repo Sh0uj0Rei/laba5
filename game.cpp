@@ -71,9 +71,11 @@ void Game::update() {
 
     // Удаление сущностей, которые должны быть удалены
     for (auto entity : toRemove) {
-        // Находим и удаляем сущность из основного списка
-        entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
-        delete entity;  // Освобождаем память
+        // Удаляем только если объект еще не удален
+        if (std::find(entities.begin(), entities.end(), entity) != entities.end()) {
+            entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
+            delete entity;  // Освобождаем память
+        }
     }
 }
 

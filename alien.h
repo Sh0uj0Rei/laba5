@@ -2,7 +2,7 @@
 #define ALIEN_H
 
 #include "entities.h"
-#include "game.h"  // Добавьте это, чтобы использовать класс Game
+#include "game.h" 
 
 class Alien : public Entities {
 public:
